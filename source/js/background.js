@@ -61,21 +61,38 @@ function rpcTransmission(args, method, tag, callback) {
       callback(jqXHR.responseJSON);
     }
   })
-  .fail(function (jqXHR, textStatus, errorThrown) {
-    if (errorThrown === 'Conflict') {
+  .fail(function (jqXHR) {
+    if (jqXHR.status === 409) {
       // X-Transmission-Session-Id should only be included if we didn't include it when we sent our request
-      let xSid = jqXHR.getResponseHeader('X-Transmission-Session-Id');
-      localStorage.sessionId = xSid;
+      localStorage.sessionId = jqXHR.getResponseHeader('X-Transmission-Session-Id');
       rpcTransmission(args, method, tag, callback);
       return;
     }
-    // console.log('ajax error: ' + errorThrown);
-    // TODO: This should be improved such that it doesn't have to return a parsed object
-    callback(JSON.parse(
-      '{"arguments":{"torrents":[{"addedDate":0,"doneDate":0,"downloadDir":"","eta":0,"id":0,"leftUntilDone":0,"metadataPercentComplete":0,"name":"Unable to connect to ' + localStorage.server + '.","rateDownload":0,"rateUpload":0,"recheckProgress":0,"sizeWhenDone":0,"status":0,"uploadedEver":0}]},"result":"Unable to connect to server.","tag":1}'
-    ));
 
-
+    callback({
+      arguments: {
+        torrents: [
+          {
+            addedDate: 0,
+            doneDate: 0,
+            downloadDir: '',
+            eta: 0,
+            id: 0,
+            leftUntilDone: 0,
+            metadataPercentComplete: 0,
+            name: 'Unable to connect to ' + localStorage.server + '.',
+						rateDownload: 0,
+            rateUpload: 0,
+            recheckProgress: 0,
+            sizeWhenDone: 0,
+            status: 0,
+            uploadedEver:0
+          }
+        ],
+				result: 'Unable to connect to server.',
+        tag: 1
+      }
+    });
   });
 }
 
